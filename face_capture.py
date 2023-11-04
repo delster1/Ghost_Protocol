@@ -4,7 +4,6 @@ import time
 import numpy as np
 import face_recognition
 import cv2
-from face_boxes import draw_boxes  # Import the draw_boxes function
 
 whitelist_names = []
 whitelist_encodings = []
@@ -27,8 +26,8 @@ video_capture.set(4, 240)  # Height
 # Initialize a list to store face encodings
 face_encodings = []
 
-
-while True:
+t_end = time.time() + 5
+while time.time() < t_end:
     # Grab a single frame of video
     ret, frame = video_capture.read()
 
@@ -42,22 +41,26 @@ while True:
     face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
-    # Create a list of match results
-    match_results = []
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
         
         face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
-        match_results.append(matches[best_match_index])
         if matches[best_match_index]:
             name = whitelist_names[best_match_index]
             print(name)
 
     # Display the results
-    # Replace the existing code for drawing boxes with the following call to draw_boxes
-    draw_boxes(frame, face_locations, match_results)
+    for top, right, bottom, left in face_locations:
+        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+        top *= 2
+        right *= 2
+        bottom *= 2
+        left *= 2
+
+        # Draw a box around the face
+        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
     # Display the resulting image
     cv2.imshow('Video', frame)
@@ -69,7 +72,6 @@ while True:
 # Release handle to the webcam
 video_capture.release()
 cv2.destroyAllWindows()
-
 my_file = open("face_encodings.txt",'w')
 for obj in face_encodings:
     my_file.write(f"OBJECT: {str(obj)}\n")
