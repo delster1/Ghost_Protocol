@@ -28,7 +28,8 @@ def add_user(r, name, face_encoding):
 def get_user_encodings(r,names):
     face_encodings = []
     for name in names:
-        encoded_data = r.get(name)
+        name = name.decode('utf-8')
+        encoded_data = r.hget(name, "face_encoding")
         encoding = np.frombuffer(encoded_data, dtype=np.float64)
         face_encodings.append(encoding)
     return face_encodings
