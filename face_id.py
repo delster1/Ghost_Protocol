@@ -20,7 +20,8 @@ def identify_faces(whitelist_names, whitelist_encodings, face_encodings):
         face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
         if matches[best_match_index]:
-            identified_names.append(whitelist_names[best_match_index])
+            string_data = whitelist_names[best_match_index].decode('utf-8')
+            identified_names.append(string_data)
         else:
             identified_names.append("Unknown")
     
