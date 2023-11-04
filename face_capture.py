@@ -11,11 +11,12 @@ whitelisted_faces_directory = "Whitelisted_Faces"
 
 for filename in os.listdir(whitelisted_faces_directory):
     f = os.path.join(whitelisted_faces_directory, filename)
-    image = face_recognition.load_image_file(f)
-    whitelist_encodings.append(face_recognition.face_encodings(image)[0])
-    whitelist_names.append(f)
+    loaded_array = np.load(f)
 
-# Get a reference to the webcam
+    whitelist_names.append(f)
+    whitelist_encodings.append(loaded_array)
+    
+
 video_capture = cv2.VideoCapture(0)
 
 # Reduce the resolution
