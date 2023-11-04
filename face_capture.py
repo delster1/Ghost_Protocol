@@ -5,7 +5,6 @@ import face_recognition
 import cv2
 import random
 import string
-from auth_lab import save_blacklisted_face
 # Global constants
 BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
@@ -116,7 +115,24 @@ def draw_labels(frame, face_locations, identified_names):
             cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
             cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
 
+def save_blacklisted_face(face_encoding):
+    directory = "Blacklisted_Faces"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
+    # Check if the face is already in the blacklist
+    matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
+    if True in matches:
+        match_index = matches.index(True)
+        return blacklist_names[match_index]  # Return the existing name if face is already blacklisted
+    
+    unique_code = generate_unique_code()  # Generate a unique code
+    filepath = os.path.join(directory, f"{unique_code}.npy")
+    np.save(filepath, face_encoding)
+
+     # Associate a random insult with the unique code
+    blacklist_insults[unique_code] = random.choice(insults)
+    return unique_code
 
 def run_video(whitelist_names, whitelist_encodings):
     # Get a reference to the webcam
