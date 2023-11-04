@@ -5,6 +5,7 @@ import numpy as np
 import face_recognition
 import cv2
 from face_boxes import draw_boxes
+from face_id import identify_faces
 
 def build_whitelist():
     whitelist_names = []
@@ -14,8 +15,10 @@ def build_whitelist():
     for filename in os.listdir(whitelisted_faces_directory):
         f = os.path.join(whitelisted_faces_directory, filename)
         loaded_array = np.load(f)
-
-        whitelist_names.append(f)
+        
+        # Assuming the name is the part of the filename before the '.npy' extension
+        name = filename.split('.')[0]  
+        whitelist_names.append(name)
         whitelist_encodings.append(loaded_array)
 
     return whitelist_names, whitelist_encodings
@@ -31,7 +34,6 @@ def run_video(whitelist_names, whitelist_encodings):
     # Initialize a list to store face encodings
     face_encodings = []
 
-    t_end = time.time() + 5
     while True:
         # Grab a single frame of video
         ret, frame = video_capture.read()
@@ -46,21 +48,17 @@ def run_video(whitelist_names, whitelist_encodings):
         face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
         face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
         
-        match_results = []
-        for face_encoding in face_encodings:
-            # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
-            
-            face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            match_results.append(matches[best_match_index])
-            if matches[best_match_index]:
-                name = whitelist_names[best_match_index]
-                print(name)
+        # Identify faces
+        identified_names = identify_faces(whitelist_names, whitelist_encodings, face_encodings)
+
+        # Compute match results
+        match_results = [name != "Unknown" for name in identified_names]
 
         # Display the results
-        draw_boxes(frame, face_locations, match_results)
+        for name in identified_names:
+            print(name)  # This will print the name of the identified face
 
+        draw_boxes(frame, face_locations, match_results)
 
         # Display the resulting image
         cv2.imshow('Video', frame)
@@ -75,3 +73,7 @@ def run_video(whitelist_names, whitelist_encodings):
     my_file = open("face_encodings.txt",'w')
     for obj in face_encodings:
         my_file.write(f"OBJECT: {str(obj)}\n")
+
+if __name__ == "__main__":
+    whitelist_names, whitelist_encodings = build_whitelist()
+    run_video(whitelist_names, whitelist_encodings)
