@@ -1,11 +1,11 @@
 from PIL import Image
 import os
-import time
 import numpy as np
 import face_recognition
 import cv2
 from face_boxes import draw_boxes
 from face_id import identify_faces
+from face_labels import draw_labels
 
 def build_whitelist():
     whitelist_names = []
@@ -31,9 +31,6 @@ def run_video(whitelist_names, whitelist_encodings):
     video_capture.set(3, 320)  # Width
     video_capture.set(4, 240)  # Height
 
-    # Initialize a list to store face encodings
-    face_encodings = []
-
     while True:
         # Grab a single frame of video
         ret, frame = video_capture.read()
@@ -54,11 +51,11 @@ def run_video(whitelist_names, whitelist_encodings):
         # Compute match results
         match_results = [name != "Unknown" for name in identified_names]
 
-        # Display the results
-        for name in identified_names:
-            print(name)  # This will print the name of the identified face
-
+        # Draw boxes around faces
         draw_boxes(frame, face_locations, match_results)
+
+        # Draw labels above the boxes
+        draw_labels(frame, face_locations, identified_names)
 
         # Display the resulting image
         cv2.imshow('Video', frame)
@@ -70,10 +67,3 @@ def run_video(whitelist_names, whitelist_encodings):
     # Release handle to the webcam
     video_capture.release()
     cv2.destroyAllWindows()
-    my_file = open("face_encodings.txt",'w')
-    for obj in face_encodings:
-        my_file.write(f"OBJECT: {str(obj)}\n")
-
-if __name__ == "__main__":
-    whitelist_names, whitelist_encodings = build_whitelist()
-    run_video(whitelist_names, whitelist_encodings)
