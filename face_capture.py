@@ -1,17 +1,19 @@
 from PIL import Image
 import os
 import time
+import numpy as np
 import face_recognition
 import cv2
-import numpy as np
 
-whitelist = []
+whitelist_names = []
+whitelist_encodings = []
 whitelisted_faces_directory = "Whitelisted_Faces"
 
 for filename in os.listdir(whitelisted_faces_directory):
     f = os.path.join(whitelisted_faces_directory, filename)
     image = face_recognition.load_image_file(f)
-    whitelist.append(face_recognition.face_encodings(image)[0])
+    whitelist_encodings.append(face_recognition.face_encodings(image)[0])
+    whitelist_names.append(f)
 
 # Get a reference to the webcam
 video_capture = cv2.VideoCapture(0)
@@ -40,9 +42,13 @@ while time.time() < t_end:
 
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
-        matches = face_recognition.compare_faces(whitelist, face_encoding)
-        if matches:
-            print("FOUND A MATCH NO WAY")
+        matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
+        
+        face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
+        best_match_index = np.argmin(face_distances)
+        if matches[best_match_index]:
+            name = whitelist_names[best_match_index]
+            print(name)
 
     # Display the results
     for top, right, bottom, left in face_locations:
