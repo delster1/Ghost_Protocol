@@ -4,6 +4,7 @@ import time
 import numpy as np
 import face_recognition
 import cv2
+from face_boxes import draw_boxes
 
 whitelist_names = []
 whitelist_encodings = []
@@ -17,6 +18,7 @@ for filename in os.listdir(whitelisted_faces_directory):
     whitelist_encodings.append(loaded_array)
     
 
+# Get a reference to the webcam
 video_capture = cv2.VideoCapture(0)
 
 # Reduce the resolution
@@ -40,27 +42,22 @@ while time.time() < t_end:
     # Find all the faces in the current frame of video
     face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-
+    
+    match_results = []
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
         
         face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
+        match_results.append(matches[best_match_index])
         if matches[best_match_index]:
             name = whitelist_names[best_match_index]
             print(name)
 
     # Display the results
-    for top, right, bottom, left in face_locations:
-        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-        top *= 2
-        right *= 2
-        bottom *= 2
-        left *= 2
+    draw_boxes(frame, face_locations, match_results)
 
-        # Draw a box around the face
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
     # Display the resulting image
     cv2.imshow('Video', frame)
