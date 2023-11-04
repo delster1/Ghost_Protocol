@@ -7,9 +7,7 @@ def main():
     r = setup_redis(redis_host, redis_port, redis_password)
 
     whitelist_names, whitelist_encodings = build_whitelist(r)
-    print(whitelist_names)
-    print(whitelist_encodings)
-    # run_video(whitelist_names, whitelist_encodings)
+    run_video(whitelist_names, whitelist_encodings)
 
 if __name__ == "__main__":
     main()
