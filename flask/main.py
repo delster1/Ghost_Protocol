@@ -11,6 +11,7 @@ def index():
 @app.route('/uploader', methods = ['GET', 'POST'])
 def upload_file():
     title = "Upload unsuccessful"
+    result = title
     if request.method == 'POST':
         f = request.files['file']
         print(f"Filename: {f.filename}")
@@ -21,7 +22,9 @@ def upload_file():
         
         title = "Upload successful"
 
-    return render_template('index.html', title=title)
+        result = f"Upload of {f.filename} successful"
+
+    return render_template('index.html', title=title, result=result)
 
 if __name__ == '__main__':  
    app.run(debug=True, port=3000)

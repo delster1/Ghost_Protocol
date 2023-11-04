@@ -1,7 +1,12 @@
 body {
-    background: #2f4f4f;
-    color: white;
+    background: #333333;
+    color: whitesmoke;
+    font-family:Arial, Helvetica, sans-serif;
 }
-#quotes {
-    font-size: 20px;
-}
+
+.center {
+    margin: auto;
+    width: 50%;
+    /* border: 3px solid whitesmoke; */
+    padding: 10px;
+  }
