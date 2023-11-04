@@ -48,8 +48,9 @@ def upload_file():
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
             # save to redis below...
-            map(add_user, face_encodings)
-            
+            for face_encoding in face_encodings:
+                add_user(rd, filename, face_encoding)
+
             print("User addition successful.")
         
             title = "Upload successful"
