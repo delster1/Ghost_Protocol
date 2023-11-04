@@ -21,12 +21,7 @@ blacklist_encodings = []
 insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
 blacklist_insults = {}
 
-def build_whitelist(r):
-    whitelist_encodings = []
-    whitelist_names = r.keys()
-    whitelist_encodings = get_user_encodings(r,whitelist_names)
 
-    return whitelist_names, whitelist_encodings
 
 def generate_unique_code(length=7):
     # Generate a random mix of letters and numbers
