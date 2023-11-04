@@ -1,3 +1,5 @@
+from PIL import Image
+import time
 import face_recognition
 import cv2
 
@@ -8,9 +10,11 @@ video_capture = cv2.VideoCapture(0)
 video_capture.set(3, 320)  # Width
 video_capture.set(4, 240)  # Height
 
-process_this_frame = True
+# Initialize a list to store face encodings
+face_encodings = []
 
-while True:
+t_end = time.time() + 5
+while time.time() < t_end:
     # Grab a single frame of video
     ret, frame = video_capture.read()
 
@@ -18,14 +22,13 @@ while True:
     small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
 
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-    rgb_small_frame = small_frame[:, :, ::-1]
+    rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
-    # Only process every other frame to save time
-    if process_this_frame:
-        # Find all the faces and face encodings in the current frame of video
-        face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
+    # Find all the faces in the current frame of video
+    face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
+    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
-    process_this_frame = not process_this_frame
+
 
     # Display the results
     for top, right, bottom, left in face_locations:
@@ -48,3 +51,6 @@ while True:
 # Release handle to the webcam
 video_capture.release()
 cv2.destroyAllWindows()
+my_file = open("face_encodings.txt",'w')
+for obj in face_encodings:
+    my_file.write(f"OBJECT: {str(obj)}\n")
