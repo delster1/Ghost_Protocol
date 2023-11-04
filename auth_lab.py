@@ -16,23 +16,23 @@ def build_whitelist(r):
 
     return whitelist_names, whitelist_encodings
 
-# def save_blacklisted_face(face_encoding):
-#     if not os.path.exists(directory):
-#         os.makedirs(directory)
+def save_blacklisted_face(face_encoding):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-#     # Check if the face is already in the blacklist
-#     matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
-#     if True in matches:
-#         match_index = matches.index(True)
-#         return blacklist_names[match_index]  # Return the existing name if face is already blacklisted
+    # Check if the face is already in the blacklist
+    matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
+    if True in matches:
+        match_index = matches.index(True)
+        return blacklist_names[match_index]  # Return the existing name if face is already blacklisted
     
-#     unique_code = generate_unique_code()  # Generate a unique code
-#     filepath = os.path.join(directory, f"{unique_code}.npy")
-#     np.save(filepath, face_encoding)
+    unique_code = generate_unique_code()  # Generate a unique code
+    filepath = os.path.join(directory, f"{unique_code}.npy")
+    np.save(filepath, face_encoding)
 
-#      # Associate a random insult with the unique code
-#     blacklist_insults[unique_code] = random.choice(insults)
-#     return unique_code
+     # Associate a random insult with the unique code
+    blacklist_insults[unique_code] = random.choice(insults)
+    return unique_code
 
 
 def add_users(r, names, face_encodings):
