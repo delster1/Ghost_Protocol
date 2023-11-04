@@ -1,4 +1,4 @@
-from face_capture import build_whitelist, run_video
+from face_capture import run_video
 from creds import redis_host, redis_port, redis_password
 from auth_lab import setup_redis, build_whitelist
 

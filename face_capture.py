@@ -5,8 +5,6 @@ import face_recognition
 import cv2
 import random
 import string
-from face_id import identify_faces
-from auth_lab import get_user_encodings
 # Global constants
 BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
@@ -18,27 +16,42 @@ RESCALE_FACTOR = 2 # doing this to avoid live division
 
 blacklist_names = []
 blacklist_encodings = []
+insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
+blacklist_insults = {}
 
+def identify_faces(whitelist_names, whitelist_encodings, face_encodings):
+    """
+    Identifies faces from a list of face encodings.
+
+    Args:
+    - whitelist_names: A list of names corresponding to the whitelist.
+    - whitelist_encodings: A list of face encodings corresponding to the whitelist.
+    - face_encodings: A list of face encodings to identify.
+
+    Returns:
+    A list of names identified from the face_encodings.
+    """
+    identified_names = []
+    for face_encoding in face_encodings:
+
+        # See if the face is a match for the known face(s)
+        matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
+        face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
+        best_match_index = np.argmin(face_distances)
+        if matches[best_match_index]:
+            string_data = whitelist_names[best_match_index].decode('utf-8')
+            identified_names.append(string_data)
+        else:
+            identified_names.append("Unknown")
+    
+    return identified_names
 
 
 def generate_unique_code(length=7):
     # Generate a random mix of letters and numbers
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-def save_blacklisted_face(face_encoding, directory=BLACKLISTED_FACES_DIRECTORY):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
 
-    # Check if the face is already in the blacklist
-    matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
-    if True in matches:
-        match_index = matches.index(True)
-        return blacklist_names[match_index]  # Return the existing name if face is already blacklisted
-    
-    unique_code = generate_unique_code()  # Generate a unique code
-    filepath = os.path.join(directory, f"{unique_code}.npy")
-    np.save(filepath, face_encoding)
-    return unique_code
 
 def draw_boxes(frame, face_locations, matches):
     """
@@ -64,40 +77,44 @@ def draw_boxes(frame, face_locations, matches):
         cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
 
 def draw_labels(frame, face_locations, identified_names):
-    """
-    Draws the usernames of whitelisted users above their heads.
-
-    Args:
-    - frame: The frame of the video.
-    - face_locations: The locations of detected faces.
-    - identified_names: A list of identified names for each face.
-    """
     font_scale = 0.75  # Increased from 0.5 to 0.75 (30% larger)
     font_thickness = 2
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     for (top, right, bottom, left), name in zip(face_locations, identified_names):
-        if name != "Unknown":
-            # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-            top *= RESCALE_FACTOR
-            right *= RESCALE_FACTOR
-            bottom *= RESCALE_FACTOR
-            left *= RESCALE_FACTOR
+        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+        top *= RESCALE_FACTOR
+        right *= RESCALE_FACTOR
+        bottom *= RESCALE_FACTOR
+        left *= RESCALE_FACTOR
+        
+        # Draw labels for blacklisted faces
+        if name in blacklist_names:
+            # Retrieve the associated insult
+            insult = blacklist_insults[name]
             
-            # Calculate the position just above the face box
+            # Draw the unique code (label) above the face box
             label_position = (left, top - 15)
-            
-            # Get the width and height of the text box
             (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
-
-            # Set the rectangle background to black
-            rectangle_bgr = (0, 0, 0)
-            
-            # Draw the rectangle to fill the text
+            rectangle_bgr = (0, 0, 0)  # Set the rectangle background to black
             cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
-            
-            # Put the text (name) at that position on the frame
             cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
+            
+            # Draw the insult below the face box
+            insult_position = (left, bottom + 15)
+            (text_width, text_height), _ = cv2.getTextSize(insult, font, font_scale, font_thickness)
+            cv2.rectangle(frame, (left, bottom), (left + text_width, bottom + 35), rectangle_bgr, cv2.FILLED)
+            cv2.putText(frame, insult, insult_position, font, font_scale, (255, 255, 255), font_thickness)
+        
+        # Draw labels for whitelisted faces
+        elif name != "Unknown":
+            # Draw the label above the face box
+            label_position = (left, top - 15)
+            (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
+            rectangle_bgr = (0, 0, 0)  # Set the rectangle background to black
+            cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
+            cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
+
 
 
 def run_video(whitelist_names, whitelist_encodings):
