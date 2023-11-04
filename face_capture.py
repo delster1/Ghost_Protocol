@@ -5,7 +5,6 @@ import face_recognition
 import cv2
 import random
 import string
-from face_boxes import draw_boxes
 from face_id import identify_faces
 from face_labels import draw_labels
 
@@ -16,6 +15,8 @@ CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 FRAME_PROCESSING_INTERVAL = 1  # Process every frame
 RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
+RESIZE_FACTOR = 0.5
+RESCALE_FACTOR = 2 # doing this to avoid live division
 
 blacklist_names = []
 blacklist_encodings = []
@@ -54,6 +55,29 @@ def save_blacklisted_face(face_encoding, directory=BLACKLISTED_FACES_DIRECTORY):
     np.save(filepath, face_encoding)
     return unique_code
 
+def draw_boxes(frame, face_locations, matches):
+    """
+    Draws boxes around detected faces.
+    Green boxes for whitelisted faces, red for others.
+
+    Args:
+    - frame: The frame of the video.
+    - face_locations: The locations of detected faces.
+    - matches: A list of boolean values indicating if a face matches the whitelist.
+    """
+    for (top, right, bottom, left), match in zip(face_locations, matches):
+        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+        top *= RESCALE_FACTOR
+        right *= RESCALE_FACTOR
+        bottom *= RESCALE_FACTOR
+        left *= RESCALE_FACTOR
+
+        # Choose box color: Green for matches, red for non-matches
+        color = (0, 255, 0) if match else (0, 0, 255)
+
+        # Draw a box around the face
+        cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+
 def run_video(whitelist_names, whitelist_encodings):
     # Get a reference to the webcam
     video_capture = cv2.VideoCapture(0)
@@ -72,7 +96,7 @@ def run_video(whitelist_names, whitelist_encodings):
         # Only process every nth frame to improve performance
         if frame_count % FRAME_PROCESSING_INTERVAL == 0:
             # Resize frame for faster face recognition processing
-            small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+            small_frame = cv2.resize(frame, (0, 0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR)
 
             # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
             rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
