@@ -6,7 +6,6 @@ import cv2
 import random
 import string
 from face_id import identify_faces
-# from face_labels import draw_labels
 
 # Global constants
 WHITELISTED_FACES_DIRECTORY = "Whitelisted_Faces"
