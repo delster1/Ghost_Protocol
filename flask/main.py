@@ -20,14 +20,14 @@ def upload_file():
 
         fnamecontents = f.filename.split(".")
 
+        # obtaining the file extension
         fext = fnamecontents[-1]
 
-        print(fext)
-
         if fext.lower() in ["jpg", "png", "jpeg", "heic"]:
+            # loads image as ndarray
             img = face_recognition.load_image_file(f)
 
-            print(img)
+            # save to redis below...
         
             title = "Upload successful"
 
