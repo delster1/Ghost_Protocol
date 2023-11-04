@@ -1,5 +1,5 @@
 import redis
-from creds.py import redis_host, redis_port, redis_password
+from creds import redis_host, redis_port, redis_password
 import numpy as np
 
 def setup_redis(redis_host, redis_port, redis_password):
