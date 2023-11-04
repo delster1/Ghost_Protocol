@@ -6,52 +6,28 @@ import cv2
 import random
 import string
 from face_id import identify_faces
-
-
+from auth_lab import get_user_encodings
 # Global constants
-WHITELISTED_FACES_DIRECTORY = "Whitelisted_Faces"
 BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 FRAME_PROCESSING_INTERVAL = 1  # Process every frame
 RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
 RESIZE_FACTOR = 0.5
-RESCALE_FACTOR = 2 # Adjusting this to avoid live division
+RESCALE_FACTOR = 2 # doing this to avoid live division
 
 blacklist_names = []
 blacklist_encodings = []
-insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
-blacklist_insults = {}
 
-
-
-def build_whitelist(directory=WHITELISTED_FACES_DIRECTORY):
-    whitelist_names = []
+def build_whitelist(r):
     whitelist_encodings = []
-
-    for filename in os.listdir(directory):
-        if filename.endswith(".npy"):
-            filepath = os.path.join(directory, filename)
-            face_encoding = np.load(filepath)
-
-            # Assuming the name is the part of the filename before the '.npy' extension
-            name = filename.split('.')[0]
-            whitelist_names.append(name)
-            whitelist_encodings.append(face_encoding)
+    whitelist_names = r.keys()
+    whitelist_encodings = get_user_encodings(r,whitelist_names)
 
     return whitelist_names, whitelist_encodings
 
-
 def generate_unique_code(length=7):
-    """
-    Generates a unique code consisting of a mix of letters and numbers.
-
-    Args:
-    - length: The desired length of the code.
-
-    Returns:
-    - A unique code as a string.
-    """
+    # Generate a random mix of letters and numbers
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def save_blacklisted_face(face_encoding, directory=BLACKLISTED_FACES_DIRECTORY):
@@ -67,10 +43,6 @@ def save_blacklisted_face(face_encoding, directory=BLACKLISTED_FACES_DIRECTORY):
     unique_code = generate_unique_code()  # Generate a unique code
     filepath = os.path.join(directory, f"{unique_code}.npy")
     np.save(filepath, face_encoding)
-    
-    # Associate a random insult with the unique code
-    blacklist_insults[unique_code] = random.choice(insults)
-    
     return unique_code
 
 def draw_boxes(frame, face_locations, matches):
@@ -97,53 +69,43 @@ def draw_boxes(frame, face_locations, matches):
         cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
 
 def draw_labels(frame, face_locations, identified_names):
+    """
+    Draws the usernames of whitelisted users above their heads.
+
+    Args:
+    - frame: The frame of the video.
+    - face_locations: The locations of detected faces.
+    - identified_names: A list of identified names for each face.
+    """
     font_scale = 0.75  # Increased from 0.5 to 0.75 (30% larger)
     font_thickness = 2
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     for (top, right, bottom, left), name in zip(face_locations, identified_names):
-        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-        top *= RESCALE_FACTOR
-        right *= RESCALE_FACTOR
-        bottom *= RESCALE_FACTOR
-        left *= RESCALE_FACTOR
-        
-        # Draw labels for blacklisted faces
-        if name in blacklist_names:
-            # Retrieve the associated insult
-            insult = blacklist_insults[name]
+        if name != "Unknown":
+            # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+            top *= RESCALE_FACTOR
+            right *= RESCALE_FACTOR
+            bottom *= RESCALE_FACTOR
+            left *= RESCALE_FACTOR
             
-            # Draw the unique code (label) above the face box
+            # Calculate the position just above the face box
             label_position = (left, top - 15)
-            (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
-            rectangle_bgr = (0, 0, 0)  # Set the rectangle background to black
-            cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
-            cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
             
-            # Draw the insult below the face box
-            insult_position = (left, bottom + 15)
-            (text_width, text_height), _ = cv2.getTextSize(insult, font, font_scale, font_thickness)
-            cv2.rectangle(frame, (left, bottom), (left + text_width, bottom + 35), rectangle_bgr, cv2.FILLED)
-            cv2.putText(frame, insult, insult_position, font, font_scale, (255, 255, 255), font_thickness)
-        
-        # Draw labels for whitelisted faces
-        elif name != "Unknown":
-            # Draw the label above the face box
-            label_position = (left, top - 15)
+            # Get the width and height of the text box
             (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
-            rectangle_bgr = (0, 0, 0)  # Set the rectangle background to black
+
+            # Set the rectangle background to black
+            rectangle_bgr = (0, 0, 0)
+            
+            # Draw the rectangle to fill the text
             cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
+            
+            # Put the text (name) at that position on the frame
             cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
 
 
 def run_video(whitelist_names, whitelist_encodings):
-    """
-    Runs the video stream and processes frames for face detection and recognition.
-
-    Args:
-    - whitelist_names: A list of names corresponding to whitelisted faces.
-    - whitelist_encodings: A list of facial encodings for whitelisted faces.
-    """
     # Get a reference to the webcam
     video_capture = cv2.VideoCapture(0)
     time.sleep(2)  # Camera warm-up
@@ -200,3 +162,4 @@ def run_video(whitelist_names, whitelist_encodings):
     # Release handle to the webcam
     video_capture.release()
     cv2.destroyAllWindows()
+    

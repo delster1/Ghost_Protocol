@@ -1,5 +1,4 @@
 import redis
-from creds import redis_host, redis_port, redis_password
 import numpy as np
 
 def setup_redis(redis_host, redis_port, redis_password):
@@ -10,13 +9,19 @@ def setup_redis(redis_host, redis_port, redis_password):
 
     return r
 
-def add_user(r, name, face_encoding_bits):
+def add_users(r, names, face_encodings):
+    for index, object in enumerate(names):
+        add_user(r, names[index], face_encodings[index])
+
+def add_user(r, name, face_encoding):
     # Redis commands
-    r.set(name,face_encoding_bits)
+    face_encoding = face_encoding.tobytes()
+    r.setnx(name,face_encoding)
 
-def get_user_encoding(r,name):
-    encoded_data = r.get(name)
-
-    encoding = np.frombuffer(encoded_data, dtype=np.float32)
-
-    return encoding
+def get_user_encodings(r,names):
+    face_encodings = []
+    for name in names:
+        encoded_data = r.get(name)
+        encoding = np.frombuffer(encoded_data, dtype=np.float64)
+        face_encodings.append(encoding)
+    return face_encodings
