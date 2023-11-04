@@ -135,3 +135,4 @@ def run_video(whitelist_names, whitelist_encodings):
     # Release handle to the webcam
     video_capture.release()
     cv2.destroyAllWindows()
+    
