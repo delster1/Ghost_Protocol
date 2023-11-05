@@ -11,7 +11,7 @@ import string
 BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
-REDIS_PROCESSING_INTERVAL = 1000 # update redis every 1000 frames
+REDIS_PROCESSING_INTERVAL = 600 # update redis every 600 frames, ideally 10s
 FRAME_PROCESSING_INTERVAL = 1  # Process every frame
 RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
 RESIZE_FACTOR = 0.5
@@ -143,7 +143,6 @@ def run_video(r):
     whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
     while True:
         # Grab a single frame of video
-        ret, frame = video_capture.read()
         frame_count += 1
 
         if frame_count % REDIS_PROCESSING_INTERVAL == 0:
@@ -153,6 +152,8 @@ def run_video(r):
 
         # Only process every nth frame to improve performance
         if frame_count % FRAME_PROCESSING_INTERVAL == 0:
+            ret, frame = video_capture.read()
+            print(f"frame_count = {frame_count}")
             # Resize frame for faster face recognition processing
             small_frame = cv2.resize(frame, (0, 0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR)
 
@@ -187,8 +188,8 @@ def run_video(r):
             # Draw labels above the boxes
             draw_labels(frame, face_locations, identified_names)
 
-        # Display the resulting image
-        cv2.imshow('Video', frame)
+            # Display the resulting image
+            cv2.imshow('Video', frame)
 
         # Hit 'q' on the keyboard to quit!
         if cv2.waitKey(1) & 0xFF == ord('q'):
