@@ -9,9 +9,6 @@ import cv2
 import random
 import string
 
-# simple configs to add day/time to the logs
-logging.basicConfig(filename='logs/out.log', encoding='utf-8', level=logging.INFO, format="%(asctime)s %(message)s")
-
 # Global constants
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
@@ -200,6 +197,9 @@ def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
     return unique_code
 
 def run_video(r):
+    # simple configs to add day/time to the logs
+    logging.basicConfig(filename='logs/out.log', encoding='utf-8', level=logging.INFO, format="%(asctime)s %(message)s")
+    
     # Get a reference to the webcam
     video_capture = cv2.VideoCapture(0)
 
