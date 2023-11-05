@@ -2,9 +2,11 @@ import os
 import time
 import numpy as np
 import face_recognition
+from auth_lab import setup_redis, build_lists
 import cv2
 import random
 import string
+
 # Global constants
 BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
@@ -33,13 +35,13 @@ def identify_faces(whitelist_names, whitelist_encodings, face_encodings):
     """
     identified_names = []
     for face_encoding in face_encodings:
-
+        
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
         face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
         if matches[best_match_index]:
-            string_data = whitelist_names[best_match_index].decode('utf-8')
+            string_data = str(whitelist_names[best_match_index])
             identified_names.append(string_data)
         else:
             identified_names.append("Unknown")
@@ -92,7 +94,6 @@ def draw_labels(frame, face_locations, identified_names):
         if name in blacklist_names:
             # Retrieve the associated insult
             insult = blacklist_insults[name]
-            
             # Draw the unique code (label) above the face box
             label_position = (left, top - 15)
             (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
@@ -108,6 +109,8 @@ def draw_labels(frame, face_locations, identified_names):
         
         # Draw labels for whitelisted faces
         elif name != "Unknown":
+            
+            name = str(name)
             # Draw the label above the face box
             label_position = (left, top - 15)
             (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
@@ -115,26 +118,23 @@ def draw_labels(frame, face_locations, identified_names):
             cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
             cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
 
-def save_blacklisted_face(face_encoding):
-    directory = "Blacklisted_Faces"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
+
 
     # Check if the face is already in the blacklist
     matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
     if True in matches:
-        match_index = matches.index(True)
-        return blacklist_names[match_index]  # Return the existing name if face is already blacklisted
+        print("USER IS IN DATABASE")
+        return matches.index(True)  # Return the existing name if face is already blacklisted
     
     unique_code = generate_unique_code()  # Generate a unique code
-    filepath = os.path.join(directory, f"{unique_code}.npy")
-    np.save(filepath, face_encoding)
-
+    
      # Associate a random insult with the unique code
     blacklist_insults[unique_code] = random.choice(insults)
     return unique_code
 
-def run_video(whitelist_names, whitelist_encodings):
+def run_video(r):
+    
     # Get a reference to the webcam
     video_capture = cv2.VideoCapture(0)
     time.sleep(2)  # Camera warm-up
@@ -145,6 +145,7 @@ def run_video(whitelist_names, whitelist_encodings):
 
     frame_count = 0
     while True:
+        whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
         # Grab a single frame of video
         ret, frame = video_capture.read()
         frame_count += 1
@@ -169,12 +170,17 @@ def run_video(whitelist_names, whitelist_encodings):
 
             # Draw boxes around faces
             draw_boxes(frame, face_locations, match_results)
-
+            print(len(blacklist_encodings))
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
-                    unique_code = save_blacklisted_face(face_encoding)
+                    unique_code = save_blacklisted_face(face_encoding,blacklist_names, blacklist_encodings)
+                    print("UNIQUIE CODE", unique_code)
                     blacklist_names.append(unique_code)
+                    my_bytes = face_encoding.tobytes()
                     blacklist_encodings.append(face_encoding)
+                    r.hset(unique_code, "face_encoding", my_bytes)
+                    r.hset(unique_code, "whitelist", "0")
+                    print("Blacklist Names:", blacklist_names)
                     identified_names[i] = unique_code  # Update the name in the list
 
             # Draw labels above the boxes
