@@ -39,11 +39,11 @@ def add_users(r, names, face_encodings):
     for index, object in enumerate(names):
         add_user(r, names[index], face_encodings[index])
 
-def add_user(r, name):
+def add_user(r, name, face_encoding):
     # Redis commands
-    face_encoding = face_encoding.tobytes()
-    r.setnx(name,face_encoding)
-
+    face_encoding_bytes = face_encoding.tobytes()
+    r.hset(name,"face_encoding", face_encoding_bytes)
+    r.hset(name, "whitelist", "1")
 def get_user_encodings(r,encodings):
     face_encodings = []
     for encoding in encodings:

@@ -9,8 +9,6 @@ from pathlib import Path
 def main():
     r = setup_redis(redis_host, redis_port, redis_password)
 
-
-    r.delete("5uJvAT1")
     run_video(r)
 
 if __name__ == "__main__":
