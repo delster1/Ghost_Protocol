@@ -168,6 +168,20 @@ def draw_labels(frame, face_locations, whitelist_names, blacklist_names, identif
             cv2.rectangle(frame, (left, top - 35), (left + text_width, top), rectangle_bgr, cv2.FILLED)
             cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
 
+
+
+def save_graylist_encoding(face_encoding, graylist):
+    face_encoding_bytes = face_encoding.tobytes()
+    file_path = os.path.join("graylist_data.bin")
+
+    # Check if the face is not in the graylist
+    if not any(face_recognition.compare_faces(graylist, face_encoding)):
+        graylist.append(face_encoding)
+
+        with open(file_path, 'ab') as file:
+            file.write(face_encoding_bytes)
+
+
 def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
     # Check if the face is already in the blacklist
     matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
@@ -222,20 +236,7 @@ def run_video(r):
             # Stores graylist data in `graylist_data.bin` per-run of the code
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
-                    face_encoding_bytes = face_encoding.tobytes()
-                    file_path = os.path.join("graylist_data" + ".bin")
-                    matches = []
-                    if len(graylist) < 1:
-                        graylist.append(face_encoding)
-                        with open(file_path, 'wb') as file:
-                            graylist.append(face_encoding)
-                            file.write(face_encoding_bytes)
-                    else:
-                        matches = face_recognition.compare_faces(graylist, face_encoding)
-                        if True not in matches:
-                            with open(file_path, 'wb') as file:
-                                graylist.append(face_encoding)
-                                file.write(face_encoding_bytes)
+                    save_graylist_encoding(face_encoding, graylist)
        
             # Draw labels above the boxes
             blur_faces(frame, face_locations,whitelist_names, identified_names)
