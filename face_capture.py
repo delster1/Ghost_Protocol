@@ -8,7 +8,6 @@ import random
 import string
 
 # Global constants
-BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 REDIS_PROCESSING_INTERVAL = 600 # update redis every 600 frames, ideally 10s
@@ -17,8 +16,6 @@ RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
 RESIZE_FACTOR = 0.5
 RESCALE_FACTOR = 2 # doing this to avoid live division
 
-blacklist_names = []
-blacklist_encodings = []
 insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
 blacklist_insults = {}
 
@@ -220,8 +217,7 @@ def run_video(r):
             # Identify faces
             identified_names = identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings, face_encodings)
 
-            # Draw boxes around faces
-            # print(len(blacklist_encodings))
+            # Stores graylist data in `graylist_data.bin` per-run of the code
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
                     face_encoding_bytes = face_encoding.tobytes()
