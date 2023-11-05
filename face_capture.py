@@ -51,12 +51,9 @@ def identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blackl
     
     return identified_names
 
-
 def generate_unique_code(length=7):
     # Generate a random mix of letters and numbers
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-
-
 
 def draw_boxes(frame, face_locations, matches):
     """
@@ -122,8 +119,6 @@ def draw_labels(frame, face_locations, identified_names):
             cv2.putText(frame, name, label_position, font, font_scale, (255, 255, 255), font_thickness)
 
 def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
-
-
     # Check if the face is already in the blacklist
     matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
     if True in matches:
@@ -137,14 +132,12 @@ def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
     return unique_code
 
 def run_video(r):
-    
     # Get a reference to the webcam
     video_capture = cv2.VideoCapture(0)
-    time.sleep(2)  # Camera warm-up
 
     # Set the resolution
-    video_capture.set(3, CAMERA_WIDTH)
-    video_capture.set(4, CAMERA_HEIGHT)
+    video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
+    video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
 
     frame_count = 0
     whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
