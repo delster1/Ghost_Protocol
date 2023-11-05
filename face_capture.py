@@ -2,7 +2,7 @@ import os
 import time
 import numpy as np
 import face_recognition
-from auth_lab import setup_redis, build_lists
+from auth_lab import  build_lists
 import cv2
 import random
 import string
@@ -80,9 +80,9 @@ def check_closeness(frame, face_features):
                 print("User too close!")
 
 # draw circles on the corners of where the face is recognized
-def blur_faces(frame, face_locations, whitelist_names, blur_amount=75):
-    for (top, right, bottom, left), match in zip(face_locations, whitelist_names):
-        if match:
+def blur_faces(frame, face_locations,whitelist_names, identified_names, blur_amount=75):
+    for (top, right, bottom, left), name in zip(face_locations, identified_names):
+        if name in whitelist_names:
             # face blurring function
             top *= RESCALE_FACTOR
             right *= RESCALE_FACTOR
@@ -189,7 +189,7 @@ def run_video(r):
     # Set the resolution
     video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
     video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
-
+    graylist = []
     frame_count = 0
     whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
     while True:
@@ -220,14 +220,27 @@ def run_video(r):
             # Compute match results
             match_results = [name != "Unknown" for name in identified_names]
 
-            # Draw boxes around faces
-            # print(len(blacklist_encodings))
+            # Store graylisted users in graylist_data.bin for future
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
-                    pass
-
+                    face_encoding_bytes = face_encoding.tobytes()
+                    file_path = os.path.join("graylist_data" + ".bin")
+                    matches = []
+                    if len(graylist) < 1:
+                        graylist.append(face_encoding)
+                        with open(file_path, 'wb') as file:
+                            graylist.append(face_encoding)
+                            file.write(face_encoding_bytes)
+                    else:
+                        matches = face_recognition.compare_faces(graylist, face_encoding)
+                        if True not in matches:
+                            with open(file_path, 'wb') as file:
+                                graylist.append(face_encoding)
+                                file.write(face_encoding_bytes)
+                    
             # Draw labels above the boxes
-            blur_faces(frame, face_locations, whitelist_names)
+            blur_faces(frame, face_locations,whitelist_names, identified_names)
+
             draw_boxes(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
             draw_labels(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
 

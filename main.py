@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 
 def main():
+
+    
     r = setup_redis(redis_host, redis_port, redis_password)
 
     run_video(r)
