@@ -1,7 +1,7 @@
 import smtplib
 import logging
 from creds import exec_emails, email_user, email_pass
-from location_details import location_details_string, get_location_details, city  # Replace with your actual file and variable
+from location_details import location_details_string, get_location_details  # Replace with your actual file and variable
 
 def send_location_emails():
     try:
@@ -12,6 +12,8 @@ def send_location_emails():
         # Email content
         location = get_location_details()
 
+        city = ""
+
         if location is not None:
             ip = location["IP"]
             city = location["City"]
@@ -19,7 +21,7 @@ def send_location_emails():
             # log this error in the logs folder
             logging.warning(f"BLACKLISTED USER DETECTED @IP: {ip} in {city} at {loc}")
 
-        subject = f'BLACKLISTER in {city(location)}'  # Using location details for the subject
+        subject = f'BLACKLISTER in {city}'  # Using location details for the subject
 
         body = location_details_string(location)
 

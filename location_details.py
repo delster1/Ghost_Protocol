@@ -27,9 +27,6 @@ def location_details_string(location):
     
     return out
 
-def city(location):
-    return location['City']
-
 # This block will only execute if the script is run directly (not imported)
 if __name__ == "__main__":
     location = get_location_details()
