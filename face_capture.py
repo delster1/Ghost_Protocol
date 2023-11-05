@@ -21,7 +21,7 @@ blacklist_encodings = []
 insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
 blacklist_insults = {}
 
-def identify_faces(whitelist_names, whitelist_encodings, face_encodings):
+def identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings, face_encodings):
     """
     Identifies faces from a list of face encodings.
 
@@ -33,6 +33,8 @@ def identify_faces(whitelist_names, whitelist_encodings, face_encodings):
     Returns:
     A list of names identified from the face_encodings.
     """
+    whitelist_encodings.extend(blacklist_encodings)
+    whitelist_names.extend(blacklist_names)
     identified_names = []
     for face_encoding in face_encodings:
         
@@ -163,7 +165,7 @@ def run_video(r):
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
             
             # Identify faces
-            identified_names = identify_faces(whitelist_names, whitelist_encodings, face_encodings)
+            identified_names = identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings, face_encodings)
 
             # Compute match results
             match_results = [name != "Unknown" for name in identified_names]
