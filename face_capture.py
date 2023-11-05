@@ -54,30 +54,48 @@ def generate_unique_code(length=7):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 # print if someone is too close to the camera
-def check_closeness(frame, face_features):
+def check_closeness(frame, face_features, whitelist_names, identified_names):
     ysize, xsize, dims = frame.shape
     # if camera is 1080p then this gets scaled to 120px which is about too close for the eyes lol
     maxdist = min(ysize, xsize) / 9
 
-    for face in face_features:
-        for item in ["left_eye", "right_eye"]:
-            # this is assuming small model size, and thus only checks 2 points for the left and right eye
-            x0, y0 = face[item][0]
-            x1, y1 = face[item][1]
+    for face, name in zip(face_features, identified_names):
+        if name not in whitelist_names:
+            for item in ["left_eye", "right_eye"]:
+                # this is assuming small model size, and thus only checks 2 points for the left and right eye
+                x0, y0 = face[item][0]
+                x1, y1 = face[item][1]
 
-            x0 *= RESCALE_FACTOR
-            y0 *= RESCALE_FACTOR
-            x1 *= RESCALE_FACTOR
-            y1 *= RESCALE_FACTOR
+                x0 *= RESCALE_FACTOR
+                y0 *= RESCALE_FACTOR
+                x1 *= RESCALE_FACTOR
+                y1 *= RESCALE_FACTOR
 
-            # euclidean distance between facial points such as eyes
-            distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
+                # euclidean distance between facial points such as eyes
+                distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
 
-            if distance > maxdist:
-                print("User too close!")
+                if distance > maxdist:
+                    print("User too close!")
+
+    # for face in face_features:
+    #     for item in ["left_eye", "right_eye"]:
+    #         # this is assuming small model size, and thus only checks 2 points for the left and right eye
+    #         x0, y0 = face[item][0]
+    #         x1, y1 = face[item][1]
+
+    #         x0 *= RESCALE_FACTOR
+    #         y0 *= RESCALE_FACTOR
+    #         x1 *= RESCALE_FACTOR
+    #         y1 *= RESCALE_FACTOR
+
+    #         # euclidean distance between facial points such as eyes
+    #         distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
+
+    #         if distance > maxdist:
+    #             print("User too close!")
 
 # draw circles on the corners of where the face is recognized
-def blur_faces(frame, face_locations,whitelist_names, identified_names, blur_amount=75):
+def blur_faces(frame, face_locations, whitelist_names, identified_names, blur_amount=75):
     for (top, right, bottom, left), name in zip(face_locations, identified_names):
         if name in whitelist_names:
             # face blurring function
@@ -211,11 +229,11 @@ def run_video(r):
             face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
             face_features = face_recognition.face_landmarks(rgb_small_frame, face_locations, model="small")
-            # print if the user is too close to the camera
-            check_closeness(frame, face_features)
             
             # Identify faces
             identified_names = identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings, face_encodings)
+            # print if the user is too close to the camera
+            check_closeness(frame, face_features, whitelist_names, identified_names)
 
             # Stores graylist data in `graylist_data.bin` per-run of the code
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
@@ -234,7 +252,7 @@ def run_video(r):
                             with open(file_path, 'wb') as file:
                                 graylist.append(face_encoding)
                                 file.write(face_encoding_bytes)
-                    
+       
             # Draw labels above the boxes
             blur_faces(frame, face_locations,whitelist_names, identified_names)
 
