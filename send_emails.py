@@ -1,4 +1,3 @@
-import os
 import smtplib
 import logging
 from creds import exec_emails, email_user, email_pass

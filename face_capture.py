@@ -1,5 +1,4 @@
 import os
-import logging
 import numpy as np
 import face_recognition
 from auth_lab import  build_lists
@@ -16,8 +15,8 @@ CAMERA_HEIGHT = 480
 REDIS_PROCESSING_INTERVAL = 600 # update redis every 600 frames, ideally 10s
 FRAME_PROCESSING_INTERVAL = 1  # Process every frame
 RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
-RESIZE_FACTOR = 0.25
-RESCALE_FACTOR = 4 # doing this to avoid live division
+RESIZE_FACTOR = 0.5
+RESCALE_FACTOR = 2 # doing this to avoid live division
 
 insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
 blacklist_insults = {}
