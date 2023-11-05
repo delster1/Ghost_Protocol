@@ -1,28 +1,63 @@
 <!DOCTYPE html>
-<title>{{title}}</title>
-
+<html>
 <head>
-</head>
-
-<body>
+    <title>{{title}}</title>
     <link rel="stylesheet" href="../static/style.css?v=1.0.10">
-    <meta http-equiv="refresh" content=60>
-    <h1>Da Webserver</h1>
-    <br> 
-    <div class="center">
-        <p class="center">Upload a file below!</p>
-
-        <form class="center" action = "http://localhost:3000/uploader" method = "POST" 
-        enctype = "multipart/form-data">
-        <input type = "file" name = "file" />
-        <input type = "text" name = "user_name"/>
-        <input type="checkbox" id="whitelist" name="whitelist"/>
-        <label for="whitelist">Whitelist</label><br>
-        <input type = "submit"/>
-
+    <meta http-equiv="refresh" content="60">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: black;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .upload-form {
+            margin-top: 20px;
+        }
+        .input-field {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">Ghost Protocol</h1>
+        <p>Take a selfie, then upload your photo!</p>
+        <p>Please choose to be whitelisted - hide your identity</p>
+        <p> or </p>
+        <p>blacklisted - add your identity to our database!</p>
+        <form class="upload-form" action="http://localhost:3000/uploader" method="POST" enctype="multipart/form-data">
+            <div class="input-field">
+                <label for="file">Selfie please!:</label>
+                <input type="file" name="file" id="file" />
+            </div>
+            <div class="input-field">
+                <label for="user_name">Your Name:</label>
+                <input type="text" name="user_name" id="user_name" />
+            </div>
+            <div class="input-field">
+                <input type="checkbox" id="whitelist" name="whitelist" />
+                <label for="whitelist">Whitelist</label>
+            </div>
+            <input type="submit" value="Upload" />
+        </form>
         <p>{{result}}</p>
     </div>
-    
- </form>
 </body>
 </html>
