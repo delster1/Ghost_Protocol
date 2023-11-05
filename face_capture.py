@@ -10,6 +10,7 @@ import random
 import string
 
 # Global constants
+ALERT_FRAME_MAX = 7 # amount of "frames" a blacklister must remain on screen before logging is sent
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 REDIS_PROCESSING_INTERVAL = 600 # update redis every 600 frames, ideally 10s
@@ -197,9 +198,6 @@ def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
     return unique_code
 
 def run_video(r):
-    # simple configs to add day/time to the logs
-    logging.basicConfig(filename='logs/out.log', encoding='utf-8', level=logging.INFO, format="%(asctime)s %(message)s")
-    
     # Get a reference to the webcam
     video_capture = cv2.VideoCapture(0)
 
@@ -247,22 +245,16 @@ def run_video(r):
                 if name in blacklist_names:
                     alert_frame_count += 1
 
-                    if alert_frame_count == 5:
-                        alert_frame_count = 0
+                    if alert_frame_count == ALERT_FRAME_MAX:
+                        # make it take triple the amount of time than before to avoid
+                        # unnecessary warnings
+                        alert_frame_count = -2 * ALERT_FRAME_MAX
 
                         try:
-                            print("ALERT: BLACKLISTED USER IN FRAME FOR >5 FRAMES")
-                            location = get_location_details()
-                            if location is not None:
-                                ip = location["IP"]
-                                city = location["City"]
-                                loc = location["Coordinates"]
-
-                                logging.warning(f"BLACKLISTED USER DETECTED @IP: {ip} in {city} at {loc}")
-
+                            print("ALERT: BLACKLISTED USER IN FRAME FOR >7 FRAMES")
                             send_location_emails()
                         except:
-                            print("ALERT: BLACKLISTED USER IN FRAME FOR >5 FRAMES")
+                            print("ALERT: BLACKLISTED USER IN FRAME FOR >7 FRAMES")
                 else:
                     alert_frame_count = 0
        
