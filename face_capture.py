@@ -56,6 +56,48 @@ def generate_unique_code(length=7):
     # Generate a random mix of letters and numbers
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
+# print if someone is too close to the camera
+def check_closeness(frame, face_features):
+    ysize, xsize, dims = frame.shape
+    # if camera is 1080p then this gets scaled to 120px which is about too close for the eyes lol
+    maxdist = min(ysize, xsize) / 9
+
+    for face in face_features:
+        for item in ["left_eye", "right_eye"]:
+            # this is assuming small model size, and thus only checks 2 points for the left and right eye
+            x0, y0 = face[item][0]
+            x1, y1 = face[item][1]
+
+            x0 *= RESCALE_FACTOR
+            y0 *= RESCALE_FACTOR
+            x1 *= RESCALE_FACTOR
+            y1 *= RESCALE_FACTOR
+
+            # euclidean distance between facial points such as eyes
+            distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
+
+            if distance > maxdist:
+                print("User too close!")
+
+# draw circles on the corners of where the face is recognized
+def blur_faces(frame, face_locations, whitelist_names, blur_amount=75):
+    for (top, right, bottom, left), match in zip(face_locations, whitelist_names):
+        if match:
+            # face blurring function
+            top *= RESCALE_FACTOR
+            right *= RESCALE_FACTOR
+            bottom *= RESCALE_FACTOR
+            left *= RESCALE_FACTOR
+
+            blur_kernel = np.ones((blur_amount, blur_amount), np.float32) / blur_amount**2
+
+            # roi should be an ndarray object
+            roi = frame[top:bottom, left:right]
+
+            roi = cv2.filter2D(src=roi, ddepth=-1, kernel=blur_kernel)
+
+            frame[top:bottom, left:right] = roi
+
 def draw_boxes(frame, face_locations,whitelist_names, blacklist_names, identified_names):
     """
     Draws boxes around detected faces.
@@ -185,6 +227,7 @@ def run_video(r):
                     pass
 
             # Draw labels above the boxes
+            blur_faces(frame, face_locations, whitelist_names)
             draw_boxes(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
             draw_labels(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
 
