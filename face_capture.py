@@ -3,6 +3,7 @@ import time
 import numpy as np
 import face_recognition
 from auth_lab import  build_lists
+from send_emails import send_location_emails
 import cv2
 import random
 import string
@@ -13,8 +14,8 @@ CAMERA_HEIGHT = 480
 REDIS_PROCESSING_INTERVAL = 600 # update redis every 600 frames, ideally 10s
 FRAME_PROCESSING_INTERVAL = 1  # Process every frame
 RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
-RESIZE_FACTOR = 0.5
-RESCALE_FACTOR = 2 # doing this to avoid live division
+RESIZE_FACTOR = 0.25
+RESCALE_FACTOR = 4 # doing this to avoid live division
 
 insults = ["DANGER", "meathead", "bro has no money XD", "smelly 4real"]
 blacklist_insults = {}
@@ -203,6 +204,7 @@ def run_video(r):
     video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
     graylist = []
     frame_count = 0
+    alert_frame_count = 0
     whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
 
     while True:
@@ -234,9 +236,23 @@ def run_video(r):
             check_closeness(frame, face_features, whitelist_names, identified_names)
 
             # Stores graylist data in `graylist_data.bin` per-run of the code
-            for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
+            for _, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
                     save_graylist_encoding(face_encoding, graylist)
+                
+                if name in blacklist_names:
+                    alert_frame_count += 1
+
+                    if alert_frame_count == 5:
+                        alert_frame_count = 0
+
+                        try:
+                            print("SENDING LOCATION EMAILS")
+                            send_location_emails()
+                        except:
+                            print("ALERT: BLACKLISTED USER IN FRAME FOR >5 FRAMES")
+                else:
+                    alert_frame_count = 0
        
             # Draw labels above the boxes
             blur_faces(frame, face_locations,whitelist_names, identified_names)
