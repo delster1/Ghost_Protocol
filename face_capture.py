@@ -1,12 +1,16 @@
 import os
-import time
+import logging
 import numpy as np
 import face_recognition
 from auth_lab import  build_lists
 from send_emails import send_location_emails
+from location_details import get_location_details
 import cv2
 import random
 import string
+
+# simple configs to add day/time to the logs
+logging.basicConfig(filename='logs/out.log', encoding='utf-8', level=logging.INFO, format="%(asctime)s %(message)s")
 
 # Global constants
 CAMERA_WIDTH = 640
@@ -247,7 +251,15 @@ def run_video(r):
                         alert_frame_count = 0
 
                         try:
-                            print("SENDING LOCATION EMAILS")
+                            print("ALERT: BLACKLISTED USER IN FRAME FOR >5 FRAMES")
+                            location = get_location_details()
+                            if location is not None:
+                                ip = location["IP"]
+                                city = location["City"]
+                                loc = location["Coordinates"]
+
+                                logging.warning(f"BLACKLISTED USER DETECTED @IP: {ip} in {city} at {loc}")
+
                             send_location_emails()
                         except:
                             print("ALERT: BLACKLISTED USER IN FRAME FOR >5 FRAMES")
