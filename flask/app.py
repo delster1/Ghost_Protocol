@@ -6,12 +6,12 @@ sys.path.append("../")
 
 from face_capture import RESIZE_FACTOR
 from creds import redis_host, redis_port, redis_password
-from auth_lab import setup_redis, add_user
+from auth_lab import setup_redis, add_user, add_blacklisted_user
 import cv2
 
 app = Flask(__name__)
 
-rd = setup_redis(redis_host, redis_port, redis_password)
+r = setup_redis(redis_host, redis_port, redis_password)
 
 @app.route("/")
 def index():
@@ -24,7 +24,7 @@ def upload_file():
     result = title
     if request.method == "POST":
         # the filename entered in the text field to save
-        filename = request.form.get("filename")
+        user_name = request.form.get("user_name")
         whitelist = request.form.get("whitelist") is not None
 
         f = request.files["file"]
@@ -50,16 +50,17 @@ def upload_file():
 
             if len(face_encodings) > 0:
                 if whitelist:
-                    print(f"Whitelisting {face_encodings[0]}")
+                    print(f"Whitelisting {user_name}")
+                    add_user(r, user_name, face_encodings[0])
                 else:
-                    print(f"Blacklisting {face_encodings[0]}")
+                    print(f"Blacklisting {user_name}")
+                    add_blacklisted_user(r, user_name, face_encodings[0])
 
+                print("User addition successful.")
 
-            print("User addition successful.")
-        
             title = "Upload successful"
 
-            result = f"Upload of {f.filename} as {filename} successful"
+            result = f"Upload of {f.filename} as {user_name} successful"
 
     return render_template("index.html", title=title, result=result)
 
