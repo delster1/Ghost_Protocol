@@ -188,15 +188,7 @@ def run_video(r):
             # print(len(blacklist_encodings))
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
-                    unique_code = save_blacklisted_face(face_encoding,blacklist_names, blacklist_encodings)
-                    print("UNIQUIE CODE", unique_code)
-                    blacklist_names.append(unique_code)
-                    my_bytes = face_encoding.tobytes()
-                    blacklist_encodings.append(face_encoding)
-                    r.hset(unique_code, "face_encoding", my_bytes)
-                    r.hset(unique_code, "whitelist", "0")
-                    print("Blacklist Names:", blacklist_names)
-                    identified_names[i] = unique_code  # Update the name in the list
+                    pass
 
             # Draw labels above the boxes
             draw_boxes(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
