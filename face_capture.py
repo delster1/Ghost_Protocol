@@ -34,17 +34,18 @@ def identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blackl
     Returns:
     A list of names identified from the face_encodings.
     """
-    whitelist_encodings.extend(blacklist_encodings)
-    whitelist_names.extend(blacklist_names)
+    total_encodings = whitelist_encodings + blacklist_encodings
+    total_names = whitelist_names + blacklist_names
+
     identified_names = []
     for face_encoding in face_encodings:
         
         # See if the face is a match for the known face(s)
-        matches = face_recognition.compare_faces(whitelist_encodings, face_encoding)
-        face_distances = face_recognition.face_distance(whitelist_encodings, face_encoding)
+        matches = face_recognition.compare_faces(total_encodings, face_encoding)
+        face_distances = face_recognition.face_distance(total_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
         if matches[best_match_index]:
-            string_data = str(whitelist_names[best_match_index])
+            string_data = str(total_names[best_match_index])
             identified_names.append(string_data)
         else:
             identified_names.append("Unknown")
@@ -55,7 +56,7 @@ def generate_unique_code(length=7):
     # Generate a random mix of letters and numbers
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-def draw_boxes(frame, face_locations, matches):
+def draw_boxes(frame, face_locations,whitelist_names, blacklist_names, identified_names):
     """
     Draws boxes around detected faces.
     Green boxes for whitelisted faces, red for others.
@@ -65,20 +66,33 @@ def draw_boxes(frame, face_locations, matches):
     - face_locations: The locations of detected faces.
     - matches: A list of boolean values indicating if a face matches the whitelist.
     """
-    for (top, right, bottom, left), match in zip(face_locations, matches):
+    for (top, right, bottom, left), name in zip(face_locations, identified_names):
         # Scale back up face locations since the frame we detected in was scaled to 1/4 size
         top *= RESCALE_FACTOR
         right *= RESCALE_FACTOR
         bottom *= RESCALE_FACTOR
         left *= RESCALE_FACTOR
-
+        color = (0, 0, 0)
         # Choose box color: Green for matches, red for non-matches
-        color = (0, 255, 0) if match else (0, 0, 255)
+        print(name in blacklist_names)
+        if name in whitelist_names:
+            print("Changing color to green")
+            color = (0, 255, 0)
+            cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+            
+        elif name in blacklist_names:
+            print("Changing color to red")
+            color = (0, 0, 255)
+            cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+        else:
+            print("Changing color to gray")
+            color = (100, 100, 100)
+            cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
 
         # Draw a box around the face
         cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
 
-def draw_labels(frame, face_locations, identified_names):
+def draw_labels(frame, face_locations, whitelist_names, blacklist_names, identified_names):
     font_scale = 0.75  # Increased from 0.5 to 0.75 (30% larger)
     font_thickness = 2
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -93,7 +107,7 @@ def draw_labels(frame, face_locations, identified_names):
         # Draw labels for blacklisted faces
         if name in blacklist_names:
             # Retrieve the associated insult
-            insult = blacklist_insults[name]
+            insult = "BLOCKED_USER"
             # Draw the unique code (label) above the face box
             label_position = (left, top - 15)
             (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
@@ -171,7 +185,6 @@ def run_video(r):
             match_results = [name != "Unknown" for name in identified_names]
 
             # Draw boxes around faces
-            draw_boxes(frame, face_locations, match_results)
             # print(len(blacklist_encodings))
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
@@ -186,7 +199,8 @@ def run_video(r):
                     identified_names[i] = unique_code  # Update the name in the list
 
             # Draw labels above the boxes
-            draw_labels(frame, face_locations, identified_names)
+            draw_boxes(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
+            draw_labels(frame, face_locations, whitelist_names, blacklist_names,  identified_names)
 
             # Display the resulting image
             cv2.imshow('Video', frame)

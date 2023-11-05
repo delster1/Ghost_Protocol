@@ -44,6 +44,11 @@ def add_user(r, name, face_encoding):
     face_encoding_bytes = face_encoding.tobytes()
     r.hset(name,"face_encoding", face_encoding_bytes)
     r.hset(name, "whitelist", "1")
+
+def add_blacklisted_user(r, name, face_encoding):
+    face_encoding_bytes = face_encoding.tobytes()
+    r.hset(name, "face_encoding", face_encoding_bytes)
+    r.hset(name, "whitelist", "0")
 def get_user_encodings(r,encodings):
     face_encodings = []
     for encoding in encodings:
