@@ -11,6 +11,7 @@ import string
 BLACKLISTED_FACES_DIRECTORY = "Blacklisted_Faces"
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
+REDIS_PROCESSING_INTERVAL = 1000 # update redis every 1000 frames
 FRAME_PROCESSING_INTERVAL = 1  # Process every frame
 RECOGNITION_TOLERANCE = 0.6  # Tolerance for face recognition
 RESIZE_FACTOR = 0.5
@@ -146,11 +147,16 @@ def run_video(r):
     video_capture.set(4, CAMERA_HEIGHT)
 
     frame_count = 0
+    whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
     while True:
-        whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
         # Grab a single frame of video
         ret, frame = video_capture.read()
         frame_count += 1
+
+        if frame_count % REDIS_PROCESSING_INTERVAL == 0:
+            frame_count = 0
+            print("Updating Redis lists...")
+            whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
 
         # Only process every nth frame to improve performance
         if frame_count % FRAME_PROCESSING_INTERVAL == 0:
@@ -172,7 +178,7 @@ def run_video(r):
 
             # Draw boxes around faces
             draw_boxes(frame, face_locations, match_results)
-            print(len(blacklist_encodings))
+            # print(len(blacklist_encodings))
             for i, (face_encoding, name) in enumerate(zip(face_encodings, identified_names)):
                 if name == "Unknown":
                     unique_code = save_blacklisted_face(face_encoding,blacklist_names, blacklist_encodings)
