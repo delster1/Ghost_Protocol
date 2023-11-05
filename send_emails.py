@@ -1,13 +1,13 @@
 import os
 import smtplib
-from creds import exec_emails  # Replace with your actual file and variable
+from creds import exec_emails, email_user, email_pass
 from location_details import location_details_string, get_location_details, city  # Replace with your actual file and variable
 
 def send_location_emails():
     try:
         # Gmail credentials
-        gmail_user = 'jacearnoldmail@gmail.com'  # Replace with your actual email
-        gmail_password = os.environ.get('GMAIL_APP_PASSWORD')  # Replace with your actual password
+        gmail_user = email_user  # Replace with your actual email
+        gmail_password = email_pass  # Replace with your actual password
 
         # Email content
         location = get_location_details()
