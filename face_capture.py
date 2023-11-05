@@ -75,24 +75,7 @@ def check_closeness(frame, face_features, whitelist_names, identified_names):
                 distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
 
                 if distance > maxdist:
-                    print("User too close!")
-
-    # for face in face_features:
-    #     for item in ["left_eye", "right_eye"]:
-    #         # this is assuming small model size, and thus only checks 2 points for the left and right eye
-    #         x0, y0 = face[item][0]
-    #         x1, y1 = face[item][1]
-
-    #         x0 *= RESCALE_FACTOR
-    #         y0 *= RESCALE_FACTOR
-    #         x1 *= RESCALE_FACTOR
-    #         y1 *= RESCALE_FACTOR
-
-    #         # euclidean distance between facial points such as eyes
-    #         distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2)
-
-    #         if distance > maxdist:
-    #             print("User too close!")
+                    print("Camera under attack!")
 
 # draw circles on the corners of where the face is recognized
 def blur_faces(frame, face_locations, whitelist_names, identified_names, blur_amount=75):
@@ -207,6 +190,7 @@ def run_video(r):
     graylist = []
     frame_count = 0
     whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings = build_lists(r)
+
     while True:
         # Grab a single frame of video
         frame_count += 1
