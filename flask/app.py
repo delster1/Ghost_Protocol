@@ -25,6 +25,7 @@ def upload_file():
     if request.method == "POST":
         # the filename entered in the text field to save
         filename = request.form.get("filename")
+        whitelist = request.form.get("whitelist") is not None
 
         f = request.files["file"]
 
@@ -47,9 +48,12 @@ def upload_file():
             face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
-            # save to redis below...
-            for face_encoding in face_encodings:
-                add_user(rd, filename, face_encoding)
+            if len(face_encodings) > 0:
+                if whitelist:
+                    print(f"Whitelisting {face_encodings[0]}")
+                else:
+                    print(f"Blacklisting {face_encodings[0]}")
+
 
             print("User addition successful.")
         
