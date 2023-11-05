@@ -3,9 +3,6 @@ import logging
 from creds import exec_emails, email_user, email_pass
 from location_details import location_details_string, get_location_details, city  # Replace with your actual file and variable
 
-# simple configs to add day/time to the logs
-logging.basicConfig(filename='logs/out.log', encoding='utf-8', level=logging.INFO, format="%(asctime)s %(message)s")
-
 def send_location_emails():
     try:
         # Gmail credentials
