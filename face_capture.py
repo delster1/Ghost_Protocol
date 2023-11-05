@@ -213,12 +213,12 @@ def run_video(r):
             # Find all the faces in the current frame of video
             face_locations = face_recognition.face_locations(rgb_small_frame, model="hog")
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+            face_features = face_recognition.face_landmarks(rgb_small_frame, face_locations, model="small")
+            # print if the user is too close to the camera
+            check_closeness(frame, face_features)
             
             # Identify faces
             identified_names = identify_faces(whitelist_names, whitelist_encodings, blacklist_names, blacklist_encodings, face_encodings)
-
-            # Compute match results
-            match_results = [name != "Unknown" for name in identified_names]
 
             # Draw boxes around faces
             # print(len(blacklist_encodings))
