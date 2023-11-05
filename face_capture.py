@@ -74,18 +74,14 @@ def draw_boxes(frame, face_locations,whitelist_names, blacklist_names, identifie
         left *= RESCALE_FACTOR
         color = (0, 0, 0)
         # Choose box color: Green for matches, red for non-matches
-        print(name in blacklist_names)
         if name in whitelist_names:
-            print("Changing color to green")
             color = (0, 255, 0)
             cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
             
         elif name in blacklist_names:
-            print("Changing color to red")
             color = (0, 0, 255)
             cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
         else:
-            print("Changing color to gray")
             color = (100, 100, 100)
             cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
 
@@ -136,7 +132,6 @@ def save_blacklisted_face(face_encoding, blacklist_names, blacklist_encodings):
     # Check if the face is already in the blacklist
     matches = face_recognition.compare_faces(blacklist_encodings, face_encoding, tolerance=RECOGNITION_TOLERANCE)
     if True in matches:
-        print("USER IS IN DATABASE")
         return matches.index(True)  # Return the existing name if face is already blacklisted
     
     unique_code = generate_unique_code()  # Generate a unique code
@@ -167,7 +162,6 @@ def run_video(r):
         # Only process every nth frame to improve performance
         if frame_count % FRAME_PROCESSING_INTERVAL == 0:
             ret, frame = video_capture.read()
-            print(f"frame_count = {frame_count}")
             # Resize frame for faster face recognition processing
             small_frame = cv2.resize(frame, (0, 0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR)
 
